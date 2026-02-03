@@ -43,7 +43,7 @@ export const Toaster: React.FC<ToasterProps> = ({
   return (
     <div
       className={cn(
-        "fixed z-50 flex flex-col gap-3 pointer-events-none",
+        "fixed z-100 flex flex-col gap-3 pointer-events-none",
         positionClasses[position],
         className
       )}
