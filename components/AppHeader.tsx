@@ -25,7 +25,7 @@ const AppHeader = () => {
     },
   ];
   return (
-    <header className=" px-5 md:px-7 lg:px-12 xl:px-20 bg-white/50 backdrop-blur-sm sticky top-0 z-50 ">
+    <header className=" px-5 md:px-7 lg:px-12 xl:px-20 bg-white/50 backdrop-blur-md sticky top-0 z-50 ">
       <div className="container mx-auto flex items-center justify-between gap-3 border-b border-black/10 py-3 lg:py-5">
         <h1
           className="font-bold text-3xl text-black cursor-pointer"
