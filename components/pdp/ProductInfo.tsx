@@ -1,14 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
-import { Star, StarHalf } from "lucide-react";
+import React, { useState, useCallback } from "react";
+import { Star, StarHalf, Check } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import ColorSelector, { Color } from "./ColorSelector";
 import SizeSelector from "./SizeSelector";
 import QuantitySelector from "@/components/ui/quantity-selector";
 import { Button } from "@/components/ui/button";
+import { useCartStore } from "@/lib/cart-store";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductInfoProps {
+  id?: string;
   name: string;
   rating: number;
   reviewCount: number;
@@ -18,10 +22,12 @@ interface ProductInfoProps {
   description: string;
   colors: Color[];
   sizes: string[];
+  image?: string;
   className?: string;
 }
 
 const ProductInfo: React.FC<ProductInfoProps> = ({
+  id = "1",
   name,
   rating,
   reviewCount,
@@ -31,11 +37,22 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   description,
   colors,
   sizes,
+  image = "",
   className,
 }) => {
   const [selectedColor, setSelectedColor] = useState(colors[0]?.value || "");
   const [selectedSize, setSelectedSize] = useState(sizes[2] || sizes[0]);
   const [quantity, setQuantity] = useState(1);
+  const [justAdded, setJustAdded] = useState(false);
+
+  const addItem = useCartStore((s) => s.addItem);
+  const getItemByProduct = useCartStore((s) => s.getItemByProduct);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const { success } = useToast();
+
+  // Check if the current variant is already in the cart
+  const cartItem = getItemByProduct(id, selectedSize, selectedColor);
+  const isInCart = !!cartItem;
 
   const renderStars = (rating: number) => {
     const stars = [];
@@ -73,14 +90,46 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     return stars;
   };
 
-  const handleAddToCart = () => {
-    console.log("Adding to cart:", {
+  const handleAddToCart = useCallback(() => {
+    addItem({
+      productId: id,
       name,
-      color: selectedColor,
+      image,
       size: selectedSize,
+      color: selectedColor,
+      price,
       quantity,
     });
-    // Add to cart logic here
+
+    // Show brief success confirmation on button
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1500);
+
+    // Show toast notification
+    success("Added to Cart", `${name} (${selectedSize}, ${selectedColor})`);
+
+    // Reset local quantity to 1 for next add
+    setQuantity(1);
+  }, [addItem, id, name, image, selectedSize, selectedColor, price, quantity, success]);
+
+  const handleCartQuantityChange = useCallback(
+    (newQuantity: number) => {
+      if (cartItem) {
+        updateQuantity(cartItem.id, newQuantity);
+      }
+    },
+    [cartItem, updateQuantity]
+  );
+
+  // Reset justAdded when variant changes
+  const handleColorChange = (color: string) => {
+    setSelectedColor(color);
+    setJustAdded(false);
+  };
+
+  const handleSizeChange = (size: string) => {
+    setSelectedSize(size);
+    setJustAdded(false);
   };
 
   return (
@@ -129,7 +178,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       <ColorSelector
         colors={colors}
         selectedColor={selectedColor}
-        onColorChange={setSelectedColor}
+        onColorChange={handleColorChange}
       />
 
       {/* Separator */}
@@ -139,21 +188,88 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       <SizeSelector
         sizes={sizes}
         selectedSize={selectedSize}
-        onSizeChange={setSelectedSize}
+        onSizeChange={handleSizeChange}
       />
 
       {/* Separator */}
       <hr className="border-black/10" />
 
-      {/* Quantity Selector & Add to Cart */}
+      {/* Quantity Selector & Add to Cart / In-Cart Controls */}
       <div className="flex items-center gap-3 md:gap-4 flex-wrap">
-        <QuantitySelector quantity={quantity} onQuantityChange={setQuantity} />
-        <Button
-          onClick={handleAddToCart}
-          className="flex-1 min-w-50 bg-black text-white hover:bg-black/90 rounded-full py-6 text-base font-medium"
-        >
-          Add to Cart
-        </Button>
+        <AnimatePresence mode="wait">
+          {isInCart ? (
+            // In-cart state: show quantity selector for the cart item
+            <motion.div
+              key="in-cart"
+              className="flex items-center gap-3 md:gap-4 flex-1 min-w-0"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+            >
+              <QuantitySelector
+                quantity={cartItem.quantity}
+                onQuantityChange={handleCartQuantityChange}
+              />
+              <div className="flex-1 min-w-50 bg-black/5 text-black rounded-full py-4 text-base font-medium flex items-center justify-center gap-2">
+                <Check className="w-5 h-5 text-green-600" />
+                <span>In Cart</span>
+              </div>
+            </motion.div>
+          ) : (
+            // Default state: quantity selector + add to cart button
+            <motion.div
+              key="add-to-cart"
+              className="flex items-center gap-3 md:gap-4 flex-1 min-w-0"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+            >
+              <QuantitySelector
+                quantity={quantity}
+                onQuantityChange={setQuantity}
+              />
+              <motion.div
+                className="flex-1 min-w-50"
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.1 }}
+              >
+                <Button
+                  onClick={handleAddToCart}
+                  disabled={justAdded}
+                  className="w-full bg-black text-white hover:bg-black/90 rounded-full py-6 text-base font-medium disabled:opacity-100"
+                >
+                  <AnimatePresence mode="wait">
+                    {justAdded ? (
+                      <motion.span
+                        key="added"
+                        className="flex items-center gap-2"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Check className="w-5 h-5" />
+                        Added!
+                      </motion.span>
+                    ) : (
+                      <motion.span
+                        key="add"
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        Add to Cart
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </Button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
