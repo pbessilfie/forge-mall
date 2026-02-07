@@ -10,12 +10,14 @@ interface ProductGridProps {
   products: Product[];
   className?: string;
   animated?: boolean;
+  showNewBadge?: boolean;
 }
 
 const ProductGrid: React.FC<ProductGridProps> = ({
   products,
   className,
   animated = false,
+  showNewBadge = false,
 }) => {
   if (animated) {
     return (
@@ -30,7 +32,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
       >
         {products.map((product) => (
           <motion.div key={product.id} variants={productCardItem}>
-            <ProductCard product={product} />
+            <ProductCard product={product} showNewBadge={showNewBadge} />
           </motion.div>
         ))}
       </motion.div>
@@ -45,7 +47,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({
       )}
     >
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} showNewBadge={showNewBadge} />
       ))}
     </div>
   );

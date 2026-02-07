@@ -12,14 +12,20 @@ export interface Product {
   originalPrice?: number;
   discount?: number;
   rating: number;
+  isNew?: boolean;
 }
 
 interface ProductCardProps {
   product: Product;
   className?: string;
+  showNewBadge?: boolean;
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
+const ProductCard: React.FC<ProductCardProps> = ({
+  product,
+  className,
+  showNewBadge = false,
+}) => {
   const renderStars = (rating: number) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -47,9 +53,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
     return stars;
   };
 
+  const shouldShowNewBadge = showNewBadge || product.isNew;
+
   return (
     <Link
-      // href={`/product/${product.id}`}
       href={`/product-details`}
       className={cn(
         "group flex flex-col gap-3 cursor-pointer w-full",
@@ -64,6 +71,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
+        {/* New Badge */}
+        {shouldShowNewBadge && (
+          <span className="absolute top-3 left-3 px-2.5 py-1 bg-black text-white text-xs font-medium rounded-full">
+            New
+          </span>
+        )}
       </div>
 
       {/* Product Info */}
@@ -75,9 +88,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className }) => {
 
         {/* Rating */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1">
-            {renderStars(product.rating)}
-          </div>
+          <div className="flex items-center gap-1">{renderStars(product.rating)}</div>
           <span className="text-sm text-black/60">
             {product.rating.toFixed(1)}/5
           </span>
