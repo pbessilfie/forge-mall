@@ -82,7 +82,7 @@ const AppFooter = () => {
               whileInView: "animate",
               viewport: { once: true, margin: "-30px" },
             })}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12"
+            className="space-y-5 md:space-y-7 xl:space-y-12"
           >
             {/* Brand Section */}
             <MotionDiv
@@ -98,58 +98,57 @@ const AppFooter = () => {
               </p>
               <FooterSocials />
             </MotionDiv>
-
-            {/* Company Links */}
-            <MotionDiv
-              {...(!prefersReducedMotion && { variants: footerContentItem })}
-            >
-              <FooterSection title="Company">
-                {companyLinks.map((link, idx) => (
-                  <FooterLink key={idx} href={link.href}>
-                    {link.label}
-                  </FooterLink>
-                ))}
-              </FooterSection>
-            </MotionDiv>
-
-            {/* Help Links */}
-            <MotionDiv
-              {...(!prefersReducedMotion && { variants: footerContentItem })}
-            >
-              <FooterSection title="Help">
-                {helpLinks.map((link, idx) => (
-                  <FooterLink key={idx} href={link.href}>
-                    {link.label}
-                  </FooterLink>
-                ))}
-              </FooterSection>
-            </MotionDiv>
-
-            {/* FAQ Links */}
-            <MotionDiv
-              {...(!prefersReducedMotion && { variants: footerContentItem })}
-            >
-              <FooterSection title="FAQ">
-                {faqLinks.map((link, idx) => (
-                  <FooterLink key={idx} href={link.href}>
-                    {link.label}
-                  </FooterLink>
-                ))}
-              </FooterSection>
-            </MotionDiv>
-
-            {/* Resources Links */}
-            <MotionDiv
-              {...(!prefersReducedMotion && { variants: footerContentItem })}
-            >
-              <FooterSection title="Resources">
-                {resourceLinks.map((link, idx) => (
-                  <FooterLink key={idx} href={link.href}>
-                    {link.label}
-                  </FooterLink>
-                ))}
-              </FooterSection>
-            </MotionDiv>
+            <div className="flex gap-7 md:gap-10 xl:gap-14 flex-wrap justify-between ">
+              {" "}
+              {/* Company Links */}
+              <MotionDiv
+                {...(!prefersReducedMotion && { variants: footerContentItem })}
+              >
+                <FooterSection title="Company">
+                  {companyLinks.map((link, idx) => (
+                    <FooterLink key={idx} href={link.href}>
+                      {link.label}
+                    </FooterLink>
+                  ))}
+                </FooterSection>
+              </MotionDiv>
+              {/* Help Links */}
+              <MotionDiv
+                {...(!prefersReducedMotion && { variants: footerContentItem })}
+              >
+                <FooterSection title="Help">
+                  {helpLinks.map((link, idx) => (
+                    <FooterLink key={idx} href={link.href}>
+                      {link.label}
+                    </FooterLink>
+                  ))}
+                </FooterSection>
+              </MotionDiv>
+              {/* FAQ Links */}
+              <MotionDiv
+                {...(!prefersReducedMotion && { variants: footerContentItem })}
+              >
+                <FooterSection title="FAQ">
+                  {faqLinks.map((link, idx) => (
+                    <FooterLink key={idx} href={link.href}>
+                      {link.label}
+                    </FooterLink>
+                  ))}
+                </FooterSection>
+              </MotionDiv>
+              {/* Resources Links */}
+              <MotionDiv
+                {...(!prefersReducedMotion && { variants: footerContentItem })}
+              >
+                <FooterSection title="Resources">
+                  {resourceLinks.map((link, idx) => (
+                    <FooterLink key={idx} href={link.href}>
+                      {link.label}
+                    </FooterLink>
+                  ))}
+                </FooterSection>
+              </MotionDiv>
+            </div>
           </MotionDiv>
         </div>
       </div>
