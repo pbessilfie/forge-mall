@@ -24,7 +24,7 @@ const Discover = () => {
         className="py-12 md:py-16"
         title="New Arrivals"
         products={newArrivals}
-        viewAllLink="/products/new-arrivals"
+        viewAllLink="/new-arrivals"
         animated
       />
 
@@ -33,7 +33,7 @@ const Discover = () => {
         className="py-12 md:py-16"
         title="Top Selling"
         products={topSelling}
-        viewAllLink="/products/top-selling"
+        viewAllLink="/category/top-selling"
         animated
       />
 
