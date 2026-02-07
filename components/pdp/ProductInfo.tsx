@@ -46,12 +46,17 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   const [justAdded, setJustAdded] = useState(false);
 
   const addItem = useCartStore((s) => s.addItem);
-  const getItemByProduct = useCartStore((s) => s.getItemByProduct);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
+  const cartItems = useCartStore((s) => s.items);
   const { success } = useToast();
 
-  // Check if the current variant is already in the cart
-  const cartItem = getItemByProduct(id, selectedSize, selectedColor);
+  // Derive cart item reactively from the items array
+  const cartItem = cartItems.find(
+    (item) =>
+      item.productId === id &&
+      item.size === selectedSize &&
+      item.color === selectedColor
+  );
   const isInCart = !!cartItem;
 
   const renderStars = (rating: number) => {
@@ -115,10 +120,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   const handleCartQuantityChange = useCallback(
     (newQuantity: number) => {
       if (cartItem) {
+        const increased = newQuantity > cartItem.quantity;
         updateQuantity(cartItem.id, newQuantity);
+        if (increased) {
+          success("Cart Updated", `${name} quantity increased to ${newQuantity}`);
+        }
       }
     },
-    [cartItem, updateQuantity]
+    [cartItem, updateQuantity, success, name]
   );
 
   // Reset justAdded when variant changes
