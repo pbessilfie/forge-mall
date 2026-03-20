@@ -41,7 +41,7 @@ const CartItem: React.FC<CartItemProps> = ({
       )}
     >
       {/* Product Image */}
-      <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden bg-[#F0EEED] shrink-0">
+      <div className="relative w-20 h-20 md:w-28 md:h-28 rounded-xl overflow-hidden bg-[#F0EEED] shrink-0">
         <Image
           src={item.image}
           alt={item.name}
@@ -52,24 +52,24 @@ const CartItem: React.FC<CartItemProps> = ({
       </div>
 
       {/* Product Details */}
-      <div className="flex-1 flex flex-col justify-between">
+      <div className="flex-1 min-w-0 flex flex-col justify-between gap-2">
         <div className="space-y-1">
           {/* Product Name & Delete Button */}
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-bold text-base md:text-lg text-black">
+            <h3 className="font-bold text-sm md:text-base text-black line-clamp-2 leading-snug">
               {item.name}
             </h3>
             <button
               onClick={() => onRemove(item.id)}
-              className="text-red-600 hover:text-red-700 transition-colors shrink-0"
+              className="text-red-500 hover:text-red-600 transition-colors shrink-0 p-0.5"
               aria-label="Remove item"
             >
-              <Trash2 className="w-5 h-5 md:w-6 md:h-6" />
+              <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
             </button>
           </div>
 
           {/* Size & Color */}
-          <div className="text-sm text-black/60 space-y-0.5">
+          <div className="text-xs md:text-sm text-black/60 space-y-0.5">
             <p>
               <span className="font-normal">Size: </span>
               <span className="font-medium">{item.size}</span>
@@ -81,18 +81,17 @@ const CartItem: React.FC<CartItemProps> = ({
           </div>
         </div>
 
-        {/* Price & Quantity */}
-        <div className="flex items-center justify-between">
-          <span className="font-bold text-xl md:text-2xl text-black">
+        {/* Price & Quantity — wraps on very small screens */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <span className="font-bold text-lg md:text-xl text-black">
             ${item.price}
           </span>
 
-          {/* Quantity Selector */}
           <QuantitySelector
             quantity={item.quantity}
             onQuantityChange={handleQuantityChange}
             min={1}
-            className="gap-4 px-4 py-2.5"
+            className="gap-2 px-3 py-2 text-sm"
           />
         </div>
       </div>
