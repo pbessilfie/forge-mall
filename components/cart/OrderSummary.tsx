@@ -1,14 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ArrowRight, Tag } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { ArrowRight, Tag, X, Check } from "lucide-react";
 import { motion, AnimatePresence, useSpring, useTransform } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   summaryItemsContainer,
   summaryItemVariant,
+  errorShakeVariant,
 } from "@/lib/motion-variants";
+
+// Hardcoded promo codes
+const PROMO_CODES: Record<
+  string,
+  { label: string; discountPercent?: number; freeShipping?: boolean }
+> = {
+  FORGE10: { label: "10% off your order", discountPercent: 10 },
+  WELCOME20: { label: "20% off your order", discountPercent: 20 },
+  SALE30: { label: "30% off your order", discountPercent: 30 },
+  FREESHIP: { label: "Free shipping", freeShipping: true },
+};
 
 interface OrderSummaryProps {
   subtotal: number;
@@ -21,7 +33,6 @@ interface OrderSummaryProps {
   className?: string;
 }
 
-// Animated number component for smooth price transitions
 const AnimatedPrice = ({
   value,
   prefix = "$",
@@ -31,10 +42,7 @@ const AnimatedPrice = ({
   prefix?: string;
   className?: string;
 }) => {
-  const spring = useSpring(value, {
-    stiffness: 100,
-    damping: 20,
-  });
+  const spring = useSpring(value, { stiffness: 100, damping: 20 });
   const display = useTransform(spring, (current) => Math.round(current));
   const [displayValue, setDisplayValue] = useState(value);
 
@@ -68,16 +76,47 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   className,
 }) => {
   const [promoCode, setPromoCode] = useState("");
-  const [isPromoApplied, setIsPromoApplied] = useState(false);
-  const total = subtotal - discount + deliveryFee;
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoFreeShipping, setPromoFreeShipping] = useState(false);
+  const [promoStatus, setPromoStatus] = useState<"idle" | "error">("idle");
+  const [promoError, setPromoError] = useState("");
+  const [shakeKey, setShakeKey] = useState(0);
+
+  const effectiveDelivery = promoFreeShipping ? 0 : deliveryFee;
+  const total = subtotal - discount - promoDiscount + effectiveDelivery;
 
   const handleApplyPromo = () => {
-    if (promoCode.trim()) {
-      setIsPromoApplied(true);
-      console.log("Applying promo code:", promoCode);
-      // Simulate promo application
-      setTimeout(() => setIsPromoApplied(false), 2000);
+    const code = promoCode.trim().toUpperCase();
+    if (!code) return;
+
+    const found = PROMO_CODES[code];
+    if (!found) {
+      setPromoStatus("error");
+      setPromoError("Invalid promo code. Try FORGE10, WELCOME20, SALE30, or FREESHIP.");
+      setShakeKey((k) => k + 1);
+      return;
     }
+
+    const extra = found.discountPercent
+      ? Math.round(subtotal * (found.discountPercent / 100))
+      : 0;
+
+    setAppliedCode(code);
+    setPromoDiscount(extra);
+    setPromoFreeShipping(found.freeShipping ?? false);
+    setPromoStatus("idle");
+    setPromoError("");
+    setPromoCode("");
+  };
+
+  const handleRemovePromo = () => {
+    setAppliedCode(null);
+    setPromoDiscount(0);
+    setPromoFreeShipping(false);
+    setPromoCode("");
+    setPromoStatus("idle");
+    setPromoError("");
   };
 
   return (
@@ -99,7 +138,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
       {/* Summary Details */}
       <div className="space-y-4">
-        {/* Subtotal */}
         <motion.div
           className="flex items-center justify-between"
           variants={summaryItemVariant}
@@ -111,7 +149,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           />
         </motion.div>
 
-        {/* Discount */}
         <motion.div
           className="flex items-center justify-between"
           variants={summaryItemVariant}
@@ -126,7 +163,52 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           />
         </motion.div>
 
-        {/* Delivery Fee */}
+        {/* Promo discount line — animated in/out */}
+        <AnimatePresence>
+          {promoDiscount > 0 && (
+            <motion.div
+              key="promo-discount"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="flex items-center justify-between gap-2 overflow-hidden"
+            >
+              <span className="text-sm md:text-base text-green-700 flex items-center gap-1.5 min-w-0">
+                <Tag className="w-4 h-4 shrink-0" />
+                <span className="truncate">Promo ({appliedCode})</span>
+              </span>
+              <AnimatedPrice
+                value={promoDiscount}
+                prefix="-$"
+                className="text-base md:text-lg font-bold text-green-700"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Free shipping line */}
+        <AnimatePresence>
+          {promoFreeShipping && (
+            <motion.div
+              key="free-shipping"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25 }}
+              className="flex items-center justify-between gap-2 overflow-hidden"
+            >
+              <span className="text-sm md:text-base text-green-700 flex items-center gap-1.5 min-w-0">
+                <Tag className="w-4 h-4 shrink-0" />
+                <span className="truncate">Free Shipping ({appliedCode})</span>
+              </span>
+              <span className="text-base md:text-lg font-bold text-green-700">
+                -${deliveryFee}
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <motion.div
           className="flex items-center justify-between"
           variants={summaryItemVariant}
@@ -135,18 +217,16 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             Delivery Fee
           </span>
           <AnimatedPrice
-            value={deliveryFee}
-            className="text-base md:text-lg font-bold text-black"
+            value={effectiveDelivery}
+            className={cn(
+              "text-base md:text-lg font-bold",
+              promoFreeShipping ? "text-black/30 line-through" : "text-black"
+            )}
           />
         </motion.div>
 
-        {/* Divider */}
-        <motion.hr
-          className="border-black/10"
-          variants={summaryItemVariant}
-        />
+        <motion.hr className="border-black/10" variants={summaryItemVariant} />
 
-        {/* Total */}
         <motion.div
           className="flex items-center justify-between"
           variants={summaryItemVariant}
@@ -165,55 +245,95 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <AnimatePresence>
         {showPromoCode && (
           <motion.div
-            className="flex items-center gap-3"
+            className="space-y-2"
             variants={summaryItemVariant}
             initial="initial"
             animate="animate"
           >
-            <div className="flex-1 flex items-center gap-3 bg-[#F0F0F0] rounded-full px-4 py-2.5">
-              <Tag className="w-5 h-5 text-black/40" />
-              <input
-                type="text"
-                value={promoCode}
-                onChange={(e) => setPromoCode(e.target.value)}
-                placeholder="Add promo code"
-                className="flex-1 bg-transparent text-sm md:text-base text-black placeholder:text-black/40 outline-none"
-              />
-            </div>
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                onClick={handleApplyPromo}
-                disabled={isPromoApplied}
-                className="bg-black text-white hover:bg-black/90 rounded-full px-6 md:px-8 text-sm md:text-base font-medium py-2.5 h-auto disabled:opacity-70"
-              >
-                <AnimatePresence mode="wait">
-                  {isPromoApplied ? (
-                    <motion.span
-                      key="applied"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                    >
-                      Applied!
-                    </motion.span>
-                  ) : (
-                    <motion.span
-                      key="apply"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
+            <AnimatePresence mode="wait">
+              {appliedCode ? (
+                /* Applied state */
+                <motion.div
+                  key="applied"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2 justify-between bg-green-50 border border-green-200 rounded-full px-4 py-2.5 min-w-0"
+                >
+                  <div className="flex items-center gap-2 text-green-700 min-w-0 flex-1">
+                    <Check className="w-4 h-4 shrink-0" />
+                    <span className="text-sm font-semibold shrink-0">{appliedCode}</span>
+                    <span className="text-sm text-green-600 truncate">
+                      — {PROMO_CODES[appliedCode]?.label}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleRemovePromo}
+                    className="text-green-500 hover:text-green-700 transition-colors shrink-0"
+                    aria-label="Remove promo code"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              ) : (
+                /* Input state */
+                <motion.div
+                  key="input"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center gap-2"
+                >
+                  <motion.div
+                    key={shakeKey}
+                    variants={errorShakeVariant}
+                    initial="initial"
+                    animate={promoStatus === "error" ? "shake" : "initial"}
+                    className="flex-1 min-w-0 flex items-center gap-2 bg-[#F0F0F0] rounded-full px-3 py-2.5"
+                  >
+                    <Tag className="w-4 h-4 text-black/40 shrink-0" />
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => {
+                        setPromoCode(e.target.value);
+                        setPromoStatus("idle");
+                        setPromoError("");
+                      }}
+                      onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                      placeholder="Promo code"
+                      className="flex-1 min-w-0 bg-transparent text-sm text-black placeholder:text-black/40 outline-none uppercase"
+                    />
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="shrink-0">
+                    <Button
+                      onClick={handleApplyPromo}
+                      disabled={!promoCode.trim()}
+                      className="bg-black text-white hover:bg-black/90 rounded-full px-5 text-sm font-medium py-2.5 h-auto disabled:opacity-40"
                     >
                       Apply
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </Button>
-            </motion.div>
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Error message */}
+            <AnimatePresence>
+              {promoError && (
+                <motion.p
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="text-xs text-red-500 px-4"
+                >
+                  {promoError}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
