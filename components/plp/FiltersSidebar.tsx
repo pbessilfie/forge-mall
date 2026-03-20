@@ -11,12 +11,19 @@ interface FilterOption {
   count?: number;
 }
 
-interface FiltersSidebarProps {
-  className?: string;
+export interface ActiveFilters {
+  priceRange: [number, number];
+  colors: string[];
+  size: string | null;
 }
 
-const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ className }) => {
-  const [priceRange, setPriceRange] = useState([50, 200]);
+interface FiltersSidebarProps {
+  className?: string;
+  onApplyFilters?: (filters: ActiveFilters) => void;
+}
+
+const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ className, onApplyFilters }) => {
+  const [priceRange, setPriceRange] = useState([0, 400]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSize, setSelectedSize] = useState<string>("Large");
 
@@ -96,8 +103,8 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ className }) => {
         <div className="space-y-4">
           <input
             type="range"
-            min="50"
-            max="200"
+            min="0"
+            max="400"
             value={priceRange[1]}
             onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
             className="w-full h-2 bg-black/10 rounded-lg appearance-none cursor-pointer accent-black"
@@ -184,7 +191,16 @@ const FiltersSidebar: React.FC<FiltersSidebarProps> = ({ className }) => {
       </div>
 
       {/* Apply Filter Button */}
-      <Button className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-black/80 transition-colors">
+      <Button
+        onClick={() =>
+          onApplyFilters?.({
+            priceRange: priceRange as [number, number],
+            colors: selectedColors,
+            size: selectedSize,
+          })
+        }
+        className="w-full bg-black text-white py-3 rounded-full font-medium hover:bg-black/80 transition-colors"
+      >
         Apply Filter
       </Button>
     </aside>

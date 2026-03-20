@@ -5,13 +5,16 @@ import { cn } from "@/lib/utils";
 import { X, ChevronRight, ChevronUp, ChevronDown } from "lucide-react";
 import { Button } from "../ui/button";
 
+import { ActiveFilters } from "./FiltersSidebar";
+
 interface FiltersModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onApplyFilters?: (filters: ActiveFilters) => void;
 }
 
-const FiltersModal: React.FC<FiltersModalProps> = ({ isOpen, onClose }) => {
-  const [priceRange, setPriceRange] = useState([50, 200]);
+const FiltersModal: React.FC<FiltersModalProps> = ({ isOpen, onClose, onApplyFilters }) => {
+  const [priceRange, setPriceRange] = useState([0, 400]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [selectedSize, setSelectedSize] = useState<string>("Large");
   const [expandedSections, setExpandedSections] = useState({
@@ -147,8 +150,8 @@ const FiltersModal: React.FC<FiltersModalProps> = ({ isOpen, onClose }) => {
               <div className="space-y-4">
                 <input
                   type="range"
-                  min="50"
-                  max="200"
+                  min="0"
+                  max="400"
                   value={priceRange[1]}
                   onChange={(e) =>
                     setPriceRange([priceRange[0], parseInt(e.target.value)])
@@ -283,7 +286,14 @@ const FiltersModal: React.FC<FiltersModalProps> = ({ isOpen, onClose }) => {
           {/* Apply Filter Button */}
           <div className="pt-6">
             <Button
-              onClick={onClose}
+              onClick={() => {
+                onApplyFilters?.({
+                  priceRange: priceRange as [number, number],
+                  colors: selectedColors,
+                  size: selectedSize,
+                });
+                onClose();
+              }}
               className="w-full bg-black text-white py-6 rounded-full text-base font-medium hover:bg-black/90 transition-colors"
             >
               Apply Filter
