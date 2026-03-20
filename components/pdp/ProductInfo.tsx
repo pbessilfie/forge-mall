@@ -9,6 +9,8 @@ import SizeSelector from "./SizeSelector";
 import QuantitySelector from "@/components/ui/quantity-selector";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/lib/cart-store";
+import { useWishlistStore } from "@/lib/wishlist-store";
+import { WishlistButton } from "@/components/ui/wishlist-button";
 import { useToast } from "@/hooks/use-toast";
 
 interface ProductInfoProps {
@@ -48,6 +50,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   const addItem = useCartStore((s) => s.addItem);
   const updateQuantity = useCartStore((s) => s.updateQuantity);
   const cartItems = useCartStore((s) => s.items);
+
+  // Build a minimal product object for wishlist
+  const wishlistProduct = { id, name, image, price, originalPrice, discount, rating };
   const { success } = useToast();
 
   // Derive cart item reactively from the items array
@@ -205,6 +210,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
       {/* Quantity Selector & Add to Cart / In-Cart Controls */}
       <div className="flex items-center gap-3 md:gap-4 flex-wrap">
+        <WishlistButton product={wishlistProduct} />
         <AnimatePresence mode="wait">
           {isInCart ? (
             // In-cart state: show quantity selector for the cart item
