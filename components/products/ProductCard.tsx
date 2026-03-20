@@ -1,8 +1,11 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { FaStar, FaStarHalfAlt } from "react-icons/fa";
+import { WishlistButton } from "@/components/ui/wishlist-button";
 
 export interface Product {
   id: string;
@@ -57,7 +60,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <Link
-      href={`/product-details`}
+      href={`/product/${product.id}`}
       className={cn(
         "group flex flex-col gap-3 cursor-pointer w-full",
         className
@@ -71,12 +74,18 @@ const ProductCard: React.FC<ProductCardProps> = ({
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-300"
         />
+
         {/* New Badge */}
         {shouldShowNewBadge && (
           <span className="absolute top-3 left-3 px-2.5 py-1 bg-black text-white text-xs font-medium rounded-full">
             New
           </span>
         )}
+
+        {/* Wishlist Button — visible on hover */}
+        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <WishlistButton product={product} size="sm" />
+        </div>
       </div>
 
       {/* Product Info */}
